@@ -42,6 +42,15 @@ Hooks.once('ready', async function() {
         default: 'Chronicle Keeper'
     });
     
+    game.settings.register('chronicle-keeper', 'gmOnlyMode', {
+        name: 'GM Only Mode',
+        hint: 'If enabled, only GMs can use /ask, /recall, and /history. Players can still use /npc and /remember. Prevents spoilers!',
+        scope: 'world',
+        config: true,
+        type: Boolean,
+        default: false
+    });
+    
     game.settings.register('chronicle-keeper', 'ragEnabled', {
         name: 'Enable RAG',
         hint: 'Use semantic search to remember campaign details (requires nomic-embed-text model)',
@@ -71,11 +80,14 @@ Hooks.once('ready', async function() {
     
     // Show welcome message
     if (game.user.isGM) {
+        const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
+        
         ui.notifications.info("Chronicle Keeper loaded! Type /ask to test.");
         
         ChatMessage.create({
             content: '<div style="border: 2px solid #ff6400; padding: 10px; background: rgba(255,100,0,0.1);">' +
                 '<h3>🎲 Chronicle Keeper Active!</h3>' +
+                (gmOnlyMode ? '<p><strong>⚠️ GM ONLY MODE ENABLED</strong> - Players cannot use /ask</p>' : '') +
                 '<p><strong>Commands:</strong></p>' +
                 '<ul>' +
                 '<li><code>/ask [question]</code> - Ask the AI (public)</li>' +
@@ -89,6 +101,7 @@ Hooks.once('ready', async function() {
                 '</ul>' +
                 '<p><strong>✨ Use /w commands for private conversations!</strong></p>' +
                 '<p>Configure in <strong>Game Settings → Module Settings</strong></p>' +
+                (gmOnlyMode ? '' : '<p><em>Enable "GM Only Mode" in settings to prevent player spoilers</em></p>') +
                 '</div>',
             whisper: [game.user.id]
         });
@@ -127,6 +140,11 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
     
     // /ask command
     if (msgLower.startsWith('/ask ')) {
+        const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
+        if (gmOnlyMode && !game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /ask in GM Only Mode');
+            return false;
+        }
         const question = msg.substring(5).trim();
         handleAskCommand(question, chatData);
         return false;
@@ -134,6 +152,11 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
     
     // /wask command - whispered ask
     if (msgLower.startsWith('/wask ')) {
+        const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
+        if (gmOnlyMode && !game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /wask in GM Only Mode');
+            return false;
+        }
         const question = msg.substring(6).trim();
         const whisperData = { ...chatData, whisper: [game.user.id, ...game.users.filter(u => u.isGM).map(u => u.id)] };
         handleAskCommand(question, whisperData);
@@ -185,6 +208,11 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
     
     // /recall command - search campaign memory
     if (msgLower.startsWith('/recall ')) {
+        const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
+        if (gmOnlyMode && !game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /recall in GM Only Mode');
+            return false;
+        }
         const topic = msg.substring(8).trim();
         handleRecallCommand(topic);
         return false;
@@ -192,6 +220,11 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
     
     // /wrecall command - whispered recall
     if (msgLower.startsWith('/wrecall ')) {
+        const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
+        if (gmOnlyMode && !game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /wrecall in GM Only Mode');
+            return false;
+        }
         const topic = msg.substring(9).trim();
         handleRecallCommand(topic);
         return false;
@@ -199,6 +232,11 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
     
     // /history command - view recent conversation history
     if (msgLower === '/history' || msgLower.startsWith('/history ')) {
+        const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
+        if (gmOnlyMode && !game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /history in GM Only Mode');
+            return false;
+        }
         const count = msgLower === '/history' ? 10 : parseInt(msg.substring(9).trim()) || 10;
         handleHistoryCommand(count);
         return false;
@@ -206,18 +244,30 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
     
     // /clearhistory command - clear stored conversations
     if (msgLower === '/clearhistory') {
+        if (!game.user.isGM) {
+            ui.notifications.warn('Only GMs can clear history');
+            return false;
+        }
         handleClearHistoryCommand();
         return false;
     }
     
     // /campaigns command - list all campaigns
     if (msgLower === '/campaigns') {
+        if (!game.user.isGM) {
+            ui.notifications.warn('Only GMs can view campaigns');
+            return false;
+        }
         handleCampaignsCommand();
         return false;
     }
     
     // /ingest command - ingest Foundry content
     if (msgLower === '/ingest' || msgLower.startsWith('/ingest ')) {
+        if (!game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /ingest');
+            return false;
+        }
         const type = msgLower === '/ingest' ? 'all' : msg.substring(8).trim();
         handleIngestCommand(type);
         return false;

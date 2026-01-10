@@ -1,0 +1,39 @@
+name: Release Module
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Create module archive
+        run: |
+          cd ..
+          zip -r chronicle-keeper.zip chronicle-keeper \
+            -x "chronicle-keeper/.git/*" \
+            -x "chronicle-keeper/.github/*" \
+            -x "chronicle-keeper/assets/README.md"
+      
+      - name: Upload to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ../chronicle-keeper.zip
+          asset_name: chronicle-keeper.zip
+          asset_content_type: application/zip
+      
+      - name: Upload module.json
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./module.json
+          asset_name: module.json
+          asset_content_type: application/json

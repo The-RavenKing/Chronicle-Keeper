@@ -1,51 +1,62 @@
 # Chronicle Keeper
 
-**AI-Powered Campaign Memory for Foundry VTT**
+**Your Campaign's Perfect Memory**
 
-Chronicle Keeper is your campaign's perfect memory. It automatically remembers every conversation, character, location, and event in your campaign, making your AI assistant truly knowledgeable about your story.
+[![Foundry VTT](https://img.shields.io/badge/Foundry%20VTT-v11%2B-orange)](https://foundryvtt.com)
+[![Latest Version](https://img.shields.io/github/v/release/yourusername/chronicle-keeper)](https://github.com/yourusername/chronicle-keeper/releases/latest)
+[![License](https://img.shields.io/github/license/yourusername/chronicle-keeper)](LICENSE)
 
-## Features
+Chronicle Keeper is an AI-powered campaign assistant for Foundry VTT that automatically remembers every conversation, character, location, and event in your campaign. Using local AI processing via Ollama, it keeps perfect records while maintaining complete privacy.
 
-- 🧠 **Perfect Memory** - Automatically stores all conversations and campaign details
-- 📚 **Content Ingestion** - Reads your journals, characters, scenes, and NPCs
-- 🎭 **NPC Conversations** - Talk to NPCs who remember past interactions
-- 🎲 **Campaign Separation** - Keep multiple campaigns completely isolated
-- ✍️ **Custom AI Behavior** - Write your own system prompts
-- 🔍 **Smart Search** - Find any detail from your campaign history
+## ✨ Features
 
-## Quick Start
+- 🧠 **Perfect Campaign Memory** - Automatically stores every conversation
+- 📚 **Content Ingestion** - Learns from journals, characters, NPCs, and scenes
+- 🎭 **Intelligent NPCs** - NPCs remember past interactions
+- 🔒 **Complete Privacy** - 100% local processing, no cloud services
+- 🛡️ **Spoiler Protection** - GM-only mode prevents player spoilers
+- ⚙️ **Highly Customizable** - Custom AI behavior and responses
 
-### 1. Install Ollama
-```bash
-ollama pull llama2:7b
-ollama serve
-```
+## 📦 Quick Installation
 
-### 2. Install Module
-Extract to: `FoundryVTT/Data/modules/chronicle-keeper/`
+1. **Install Ollama** from [ollama.ai](https://ollama.ai)
+2. Pull model: `ollama pull llama2:7b`
+3. Start Ollama: `ollama serve`
+4. Install module in Foundry VTT
+5. Enable and configure in Module Settings
+6. Run `/ingest` to load campaign knowledge
 
-### 3. Configure
-1. Enable module, refresh (F5)
-2. Settings → Module Settings → Enable RAG
-3. Run `/ingest` to learn your campaign!
-
-## Commands
+## 🚀 Commands
 
 - `/ask [question]` - Ask the AI
-- `/npc [Name]: [msg]` - Talk to NPC
-- `/ingest` - Learn all campaign content
-- `/history` - View conversations
-- `/campaigns` - Manage campaigns
+- `/npc [Name]: [message]` - Talk to NPCs
+- `/ingest` - Learn campaign content
+- `/wask` & `/wnpc` - Whispered versions (private)
+- And more! See full documentation below.
 
-## How It Works
+## 📖 Full Documentation
 
-1. Run `/ingest` - AI reads all journals, characters, NPCs, scenes
-2. Use `/ask` - AI automatically references relevant content
-3. Everything is stored automatically
-4. AI builds perfect campaign knowledge over time
+See the complete [README](https://github.com/yourusername/chronicle-keeper) on GitHub for:
+- Detailed installation instructions
+- All commands and usage examples
+- Configuration guide
+- Spoiler protection setup
+- Campaign management
+- Troubleshooting
 
-## Documentation
+## 🛡️ Privacy First
 
-See included guides for detailed help!
+Chronicle Keeper runs **100% locally** using Ollama. No data is sent to external servers. Your campaign stays on your computer.
+
+## 📝 License
+
+MIT License - See [LICENSE](LICENSE) file
+
+## 🙏 Support
+
+- [GitHub Issues](https://github.com/yourusername/chronicle-keeper/issues)
+- [Foundry VTT Discord](https://discord.gg/foundryvtt)
+
+---
 
 **Chronicle Keeper** - Your campaign's perfect memory 🎲✨
