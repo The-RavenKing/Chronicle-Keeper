@@ -1,0 +1,40 @@
+{
+  "id": "chronicle-keeper",
+  "title": "Chronicle Keeper",
+  "version": "1.1.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "13"
+  },
+  "description": "AI-powered campaign assistant that remembers everything about your story",
+  "authors": [
+    {
+      "name": "Module Author",
+      "flags": {}
+    }
+  ],
+  "relationships": {
+    "systems": [],
+    "requires": []
+  },
+  "esmodules": [
+    "scripts/chronicle-keeper.js"
+  ],
+  "styles": [
+    "styles/chronicle-keeper.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "url": "",
+  "manifest": "",
+  "download": "",
+  "license": "",
+  "readme": "",
+  "bugs": "",
+  "changelog": ""
+}

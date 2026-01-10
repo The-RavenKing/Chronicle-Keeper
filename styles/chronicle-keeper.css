@@ -1,0 +1,26 @@
+/* Ollama Storyteller Styles */
+.chronicle-message {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.chronicle-question {
+    background: rgba(100, 150, 255, 0.1);
+    border-left: 3px solid #6496ff;
+}
+
+.chronicle-response {
+    background: rgba(255, 100, 100, 0.1);
+    border-left: 3px solid #ff6464;
+}
+
+.chronicle-npc {
+    background: rgba(255, 165, 0, 0.1);
+    border-left: 3px solid #ffa500;
+}
+
+.chronicle-error {
+    background: rgba(255, 0, 0, 0.1);
+    border-left: 3px solid #ff0000;
+}
