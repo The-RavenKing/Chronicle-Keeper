@@ -19,15 +19,15 @@ Before submitting, replace these placeholders in `module.json`:
    ```json
    "name": "Your Real Name",
    "email": "your.email@example.com",
-   "url": "https://github.com/yourusername"
+   "url": "https://github.com/The-RavenKing"
    ```
 
-2. **URL fields** (replace `yourusername` with your GitHub username):
+2. **URL fields** (replace `The-RavenKing` with your GitHub username):
    ```json
-   "url": "https://github.com/yourusername/chronicle-keeper",
-   "manifest": "https://github.com/yourusername/chronicle-keeper/releases/latest/download/module.json",
-   "download": "https://github.com/yourusername/chronicle-keeper/releases/latest/download/chronicle-keeper.zip",
-   "bugs": "https://github.com/yourusername/chronicle-keeper/issues"
+   "url": "https://github.com/The-RavenKing/chronicle-keeper",
+   "manifest": "https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/module.json",
+   "download": "https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/chronicle-keeper.zip",
+   "bugs": "https://github.com/The-RavenKing/chronicle-keeper/issues"
    ```
 
 ## 📦 Step-by-Step Submission
@@ -55,8 +55,8 @@ git add .
 # Commit
 git commit -m "Initial release v1.0.0"
 
-# Add your GitHub repo as remote (replace yourusername!)
-git remote add origin https://github.com/yourusername/chronicle-keeper.git
+# Add your GitHub repo as remote (replace The-RavenKing!)
+git remote add origin https://github.com/The-RavenKing/chronicle-keeper.git
 
 # Push to GitHub
 git branch -M main
@@ -79,7 +79,7 @@ git push
 ### Step 4: Update module.json
 
 Edit `module.json` and replace:
-- `yourusername` with your actual GitHub username (in all URLs)
+- `The-RavenKing` with your actual GitHub username (in all URLs)
 - Author name, email, URL
 
 Then commit:
@@ -91,7 +91,7 @@ git push
 
 ### Step 5: Create First Release
 
-1. Go to your repo: `https://github.com/yourusername/chronicle-keeper`
+1. Go to your repo: `https://github.com/The-RavenKing/chronicle-keeper`
 2. Click **Releases** → **Create a new release**
 3. Click **Choose a tag** → Type `v1.0.0` → **Create new tag**
 4. Release title: `v1.0.0 - Initial Release`
@@ -131,7 +131,7 @@ The GitHub Action will automatically:
 2. Go to **Add-on Modules** → **Install Module**
 3. Paste your manifest URL:
    ```
-   https://github.com/yourusername/chronicle-keeper/releases/latest/download/module.json
+   https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/module.json
    ```
 4. Click **Install**
 5. Test that it works!
@@ -145,7 +145,7 @@ The GitHub Action will automatically:
 4. Fill out the form:
    - **Package Type**: Module
    - **Package Name**: Chronicle Keeper
-   - **Manifest URL**: `https://github.com/yourusername/chronicle-keeper/releases/latest/download/module.json`
+   - **Manifest URL**: `https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/module.json`
 5. Submit and wait for approval
 
 #### Option B: Community List
@@ -158,7 +158,7 @@ The GitHub Action will automatically:
      "title": "Chronicle Keeper",
      "description": "AI-powered campaign memory assistant",
      "version": "1.0.0",
-     "manifest": "https://github.com/yourusername/chronicle-keeper/releases/latest/download/module.json",
+     "manifest": "https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/module.json",
      "compatibility": {
        "minimum": "11",
        "verified": "13"
