@@ -13,10 +13,10 @@ jobs:
       - name: Create module archive
         run: |
           cd ..
-          zip -r chronicle-keeper.zip chronicle-keeper \
-            -x "chronicle-keeper/.git/*" \
-            -x "chronicle-keeper/.github/*" \
-            -x "chronicle-keeper/assets/README.md"
+          zip -r chronicle-keeper.zip Chronicle-Keeper \
+            -x "Chronicle-Keeper/.git/*" \
+            -x "Chronicle-Keeper/.github/*" \
+            -x "Chronicle-Keeper/assets/README.md"
       
       - name: Upload to release
         uses: actions/upload-release-asset@v1
