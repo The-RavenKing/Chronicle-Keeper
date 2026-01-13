@@ -78,6 +78,15 @@ Hooks.once('ready', async function() {
         default: {}
     });
     
+    game.settings.register('chronicle-keeper', 'currentState', {
+        name: 'Current State',
+        hint: 'Current situation context (locations, relationships, status)',
+        scope: 'world',
+        config: false,
+        type: String,
+        default: ''
+    });
+    
     // Show welcome message
     if (game.user.isGM) {
         const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
@@ -92,14 +101,14 @@ Hooks.once('ready', async function() {
                 '<ul>' +
                 '<li><code>/ask [question]</code> - Ask the AI (public)</li>' +
                 '<li><code>/wask [question]</code> - Ask the AI (whispered to GM)</li>' +
+                '<li><code>/ooc [question]</code> - Out of character meta question ⭐</li>' +
+                '<li><code>/wooc [question]</code> - OOC whispered</li>' +
                 '<li><code>/npc [Name]: [message]</code> - Talk to NPC (public)</li>' +
                 '<li><code>/wnpc [Name]: [message]</code> - Talk to NPC (whispered)</li>' +
-                '<li><code>/ingest</code> - Learn all journals, characters, scenes! ⭐</li>' +
-                '<li><code>/remember [info]</code> - Manually add info</li>' +
-                '<li><code>/recall [topic]</code> - Search memory</li>' +
-                '<li><code>/history</code> - View recent conversations</li>' +
+                '<li><code>/state [info]</code> - Set current situation context</li>' +
+                '<li><code>/ingest</code> - Learn all journals, characters, scenes!</li>' +
                 '</ul>' +
-                '<p><strong>✨ Use /w commands for private conversations!</strong></p>' +
+                '<p><strong>✨ Use /ooc for meta questions about the game!</strong></p>' +
                 '<p>Configure in <strong>Game Settings → Module Settings</strong></p>' +
                 (gmOnlyMode ? '' : '<p><em>Enable "GM Only Mode" in settings to prevent player spoilers</em></p>') +
                 '</div>',
@@ -108,6 +117,127 @@ Hooks.once('ready', async function() {
     }
     
     console.log("Chronicle Keeper | Ready - Commands available: /ask, /npc");
+});
+
+// Track combat encounters automatically
+Hooks.on('combatStart', (combat, updateData) => {
+    if (!game.user.isGM) return;
+    
+    const ragEnabled = game.settings.get('chronicle-keeper', 'ragEnabled');
+    if (!ragEnabled) return;
+    
+    console.log("Chronicle Keeper | Combat started, recording initial state");
+    
+    // Record initial HP for all combatants
+    const combatants = combat.combatants.map(c => {
+        const actor = c.actor;
+        const hp = actor?.system?.attributes?.hp || actor?.system?.hp;
+        const maxHP = hp?.max || hp?.value || 0;
+        const currentHP = hp?.value || 0;
+        
+        return {
+            id: c.id,
+            name: actor?.name || 'Unknown',
+            currentHP: currentHP,
+            maxHP: maxHP,
+            type: actor?.type || 'unknown'
+        };
+    });
+    
+    // Store combat start data temporarily
+    game.chronicleKeeper = game.chronicleKeeper || {};
+    game.chronicleKeeper.currentCombat = {
+        id: combat.id,
+        round: 0,
+        startTime: new Date().toLocaleString(),
+        initialState: combatants
+    };
+    
+    // Auto-update current state
+    const stateText = 'COMBAT STARTED\n' + combatants.map(c => 
+        `${c.name}: ${c.currentHP}/${c.maxHP} HP`
+    ).join('\n');
+    game.settings.set('chronicle-keeper', 'currentState', stateText);
+});
+
+Hooks.on('deleteCombat', (combat, options, userId) => {
+    if (!game.user.isGM) return;
+    
+    const ragEnabled = game.settings.get('chronicle-keeper', 'ragEnabled');
+    if (!ragEnabled) return;
+    
+    console.log("Chronicle Keeper | Combat ended, recording final state");
+    
+    // Get stored combat data
+    const storedCombat = game.chronicleKeeper?.currentCombat;
+    if (!storedCombat || storedCombat.id !== combat.id) return;
+    
+    // Record final HP for all combatants
+    const finalState = combat.combatants.map(c => {
+        const actor = c.actor;
+        const hp = actor?.system?.attributes?.hp || actor?.system?.hp;
+        const currentHP = hp?.value || 0;
+        const maxHP = hp?.max || hp?.value || 0;
+        
+        // Find initial state
+        const initial = storedCombat.initialState.find(i => i.id === c.id);
+        const hpChange = initial ? currentHP - initial.currentHP : 0;
+        
+        return {
+            name: actor?.name || 'Unknown',
+            initialHP: initial?.currentHP || 0,
+            finalHP: currentHP,
+            maxHP: maxHP,
+            change: hpChange,
+            survived: currentHP > 0,
+            type: actor?.type || 'unknown'
+        };
+    });
+    
+    // Create combat summary
+    const timestamp = new Date().toLocaleString();
+    const duration = storedCombat.startTime;
+    
+    let summary = `[${timestamp}] === COMBAT ENCOUNTER ===\n`;
+    summary += `Started: ${duration}\n`;
+    summary += `Rounds: ${combat.round}\n\n`;
+    
+    // Separate PCs and NPCs
+    const pcs = finalState.filter(c => c.type === 'character');
+    const npcs = finalState.filter(c => c.type !== 'character');
+    
+    if (pcs.length > 0) {
+        summary += 'PLAYER CHARACTERS:\n';
+        pcs.forEach(pc => {
+            const status = pc.survived ? '✓ SURVIVED' : '✗ DEFEATED';
+            summary += `  ${pc.name}: ${pc.initialHP} → ${pc.finalHP}/${pc.maxHP} HP (${pc.change >= 0 ? '+' : ''}${pc.change}) ${status}\n`;
+        });
+    }
+    
+    if (npcs.length > 0) {
+        summary += '\nENEMIES/NPCs:\n';
+        npcs.forEach(npc => {
+            const status = npc.survived ? '✓ SURVIVED' : '✗ DEFEATED';
+            summary += `  ${npc.name}: ${npc.initialHP} → ${npc.finalHP}/${npc.maxHP} HP (${npc.change >= 0 ? '+' : ''}${npc.change}) ${status}\n`;
+        });
+    }
+    
+    summary += '=== END COMBAT ===\n';
+    
+    // Store in campaign memory
+    const currentNotes = getCampaignNotes();
+    setCampaignNotes(currentNotes + '\n' + summary);
+    
+    // Clear current state combat info
+    game.settings.set('chronicle-keeper', 'currentState', '');
+    
+    // Clean up temporary data
+    delete game.chronicleKeeper.currentCombat;
+    
+    // Notify GM
+    ui.notifications.info("Combat summary saved to memory");
+    
+    console.log("Chronicle Keeper | Combat summary saved");
 });
 
 // Helper function to get current campaign name
@@ -160,6 +290,21 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
         const question = msg.substring(6).trim();
         const whisperData = { ...chatData, whisper: [game.user.id, ...game.users.filter(u => u.isGM).map(u => u.id)] };
         handleAskCommand(question, whisperData);
+        return false;
+    }
+    
+    // /ooc command - out of character question (no memory, no state, just system prompt)
+    if (msgLower.startsWith('/ooc ')) {
+        const question = msg.substring(5).trim();
+        handleOOCCommand(question, chatData);
+        return false;
+    }
+    
+    // /wooc command - whispered out of character
+    if (msgLower.startsWith('/wooc ')) {
+        const question = msg.substring(6).trim();
+        const whisperData = { ...chatData, whisper: [game.user.id, ...game.users.filter(u => u.isGM).map(u => u.id)] };
+        handleOOCCommand(question, whisperData);
         return false;
     }
     
@@ -262,6 +407,31 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
         return false;
     }
     
+    // /state command - view or set current state
+    if (msgLower === '/state' || msgLower.startsWith('/state ')) {
+        if (!game.user.isGM) {
+            ui.notifications.warn('Only GMs can manage current state');
+            return false;
+        }
+        if (msgLower === '/state') {
+            handleViewStateCommand();
+        } else {
+            const stateInfo = msg.substring(7).trim();
+            handleSetStateCommand(stateInfo);
+        }
+        return false;
+    }
+    
+    // /clearstate command - clear current state
+    if (msgLower === '/clearstate') {
+        if (!game.user.isGM) {
+            ui.notifications.warn('Only GMs can clear state');
+            return false;
+        }
+        handleClearStateCommand();
+        return false;
+    }
+    
     // /ingest command - ingest Foundry content
     if (msgLower === '/ingest' || msgLower.startsWith('/ingest ')) {
         if (!game.user.isGM) {
@@ -302,6 +472,13 @@ async function handleAskCommand(question, chatData) {
         // Build context with RAG if enabled
         let context = '';
         if (ragEnabled) {
+            // Add current state first (most important)
+            const currentState = game.settings.get('chronicle-keeper', 'currentState');
+            if (currentState && currentState.trim() !== '') {
+                context = '\n\n=== CURRENT STATE ===\n' + currentState + '\n=== END CURRENT STATE ===\n';
+            }
+            
+            // Then add relevant past context
             const campaignNotes = getCampaignNotes();
             if (campaignNotes) {
                 // Search for relevant past conversations
@@ -316,9 +493,9 @@ async function handleAskCommand(question, chatData) {
                 
                 // Use relevant lines if found, otherwise use recent history
                 if (relevantLines.length > 0) {
-                    context = '\n\nRELEVANT PAST CONTEXT:\n' + relevantLines.slice(-10).join('\n') + '\n\n';
+                    context += '\n\nRELEVANT PAST CONTEXT:\n' + relevantLines.slice(-10).join('\n') + '\n\n';
                 } else if (lines.length > 0) {
-                    context = '\n\nRECENT CONTEXT:\n' + lines.slice(-5).join('\n') + '\n\n';
+                    context += '\n\nRECENT CONTEXT:\n' + lines.slice(-5).join('\n') + '\n\n';
                 }
             }
         }
@@ -610,6 +787,74 @@ function handleCampaignsCommand() {
     ChatMessage.create({ content: content });
 }
 
+// Handle /state command - view current state
+function handleViewStateCommand() {
+    const currentState = game.settings.get('chronicle-keeper', 'currentState');
+    const campaignName = game.settings.get('chronicle-keeper', 'currentCampaign') || 'Default';
+    
+    if (!currentState || currentState.trim() === '') {
+        ChatMessage.create({
+            content: '<div style="background: rgba(255,152,0,0.1); padding: 10px; border-left: 3px solid #ff9800;">' +
+                '<strong>📍 No Current State Set</strong><br>' +
+                'Use <code>/state [info]</code> to set current situation context.<br><br>' +
+                '<em>Example: /state Player 1 is in the tavern, Player 2 is at the docks</em>' +
+                '</div>',
+            whisper: [game.user.id]
+        });
+    } else {
+        ChatMessage.create({
+            content: '<div style="background: rgba(33,150,243,0.1); padding: 10px; border-left: 3px solid #2196f3;">' +
+                '<strong>📍 Current State (' + campaignName + '):</strong><br><br>' +
+                currentState.split('\n').join('<br>') +
+                '</div>',
+            whisper: [game.user.id]
+        });
+    }
+}
+
+// Handle /state [info] command - set current state
+function handleSetStateCommand(stateInfo) {
+    game.settings.set('chronicle-keeper', 'currentState', stateInfo);
+    
+    ui.notifications.info("Current state updated!");
+    
+    ChatMessage.create({
+        content: '<div style="background: rgba(76,175,80,0.1); padding: 10px; border-left: 3px solid #4caf50;">' +
+            '<strong>📍 Current State Updated:</strong><br><br>' +
+            stateInfo.split('\n').join('<br>') +
+            '</div>',
+        whisper: [game.user.id]
+    });
+}
+
+// Handle /clearstate command
+function handleClearStateCommand() {
+    const currentState = game.settings.get('chronicle-keeper', 'currentState');
+    
+    if (!currentState || currentState.trim() === '') {
+        ui.notifications.info("Current state is already empty");
+        return;
+    }
+    
+    Dialog.confirm({
+        title: "Clear Current State",
+        content: "<p>Clear the current state context?</p>",
+        yes: () => {
+            game.settings.set('chronicle-keeper', 'currentState', '');
+            ui.notifications.info("Current state cleared!");
+            ChatMessage.create({
+                content: '<div style="background: rgba(255,152,0,0.1); padding: 10px; border-left: 3px solid #ff9800;">' +
+                    '<strong>📍 Current state cleared</strong>' +
+                    '</div>',
+                whisper: [game.user.id]
+            });
+        },
+        no: () => {
+            ui.notifications.info("Cancelled");
+        }
+    });
+}
+
 // Handle /ingest command - ingest Foundry content into memory
 async function handleIngestCommand(type) {
     console.log("Chronicle Keeper | Ingesting content type:", type);
@@ -757,4 +1002,55 @@ function stripHTML(html) {
 console.log("Chronicle Keeper | Script loaded successfully");
 
 // Export for ES6 module compatibility
-export { handleAskCommand, handleNPCCommand, handleRememberCommand, handleRecallCommand, handleHistoryCommand, handleClearHistoryCommand, handleCampaignsCommand, handleIngestCommand };
+export { handleAskCommand, handleNPCCommand, handleRememberCommand, handleRecallCommand, handleHistoryCommand, handleClearHistoryCommand, handleCampaignsCommand, handleIngestCommand, handleViewStateCommand, handleSetStateCommand, handleClearStateCommand, handleOOCCommand };
+
+// Handle /ooc command - out of character (no memory, just system prompt)
+async function handleOOCCommand(question, chatData) {
+    console.log("Chronicle Keeper | Handling /ooc command");
+    ui.notifications.info("Asking AI (OOC)...");
+    
+    const aiName = game.settings.get('chronicle-keeper', 'aiName');
+    const whisperTargets = chatData?.whisper || [];
+    
+    await ChatMessage.create({
+        content: '<div style="background: rgba(156,39,176,0.1); padding: 10px; border-left: 3px solid #9c27b0;">' +
+            '<strong>OOC Question:</strong> ' + question +
+            '</div>',
+        whisper: whisperTargets
+    });
+    
+    try {
+        const ollamaUrl = game.settings.get('chronicle-keeper', 'ollamaUrl');
+        const model = game.settings.get('chronicle-keeper', 'ollamaModel');
+        const systemPrompt = game.settings.get('chronicle-keeper', 'systemPrompt');
+        
+        const oocPrompt = systemPrompt + "\n\nThis is an OUT OF CHARACTER meta question. Answer as a helpful assistant discussing the game.\n\nQuestion: " + question + "\n\nAnswer:";
+        
+        const response = await fetch(ollamaUrl + '/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: model, prompt: oocPrompt, stream: false })
+        });
+        
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        
+        const data = await response.json();
+        
+        await ChatMessage.create({
+            speaker: { alias: aiName + ' (OOC)' },
+            content: '<div style="background: rgba(156,39,176,0.1); padding: 10px; border-left: 3px solid #9c27b0;">' +
+                '<strong>OOC Response:</strong><br>' + data.response +
+                '</div>',
+            whisper: whisperTargets
+        });
+        
+        ui.notifications.info("OOC response received!");
+    } catch (error) {
+        console.error("Chronicle Keeper | OOC Error:", error);
+        ui.notifications.error('Failed to get OOC response: ' + error.message);
+    }
+}
+
+console.log("Chronicle Keeper | Script loaded successfully");
+
+// Export for ES6 module compatibility
