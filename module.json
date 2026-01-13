@@ -1,52 +1,61 @@
-{
-  "id": "chronicle-keeper",
-  "title": "Chronicle Keeper",
-  "version": "1.0.0",
-  "compatibility": {
-    "minimum": "11",
-    "verified": "13",
-    "maximum": "13"
-  },
-  "description": "AI-powered campaign memory assistant that automatically remembers every conversation, character, and event in your story. Uses local Ollama for complete privacy.",
-  "authors": [
-    {
-      "name": "The-RavenKing",
-      "url": "https://github.com/The-RavenKing",
-      "flags": {}
-    }
-  ],
-  "relationships": {
-    "systems": [],
-    "requires": []
-  },
-  "esmodules": [
-    "scripts/chronicle-keeper.js"
-  ],
-  "styles": [
-    "styles/chronicle-keeper.css"
-  ],
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json"
-    }
-  ],
-  "url": "https://github.com/The-RavenKing/chronicle-keeper",
-  "manifest": "https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/module.json",
-  "download": "https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/chronicle-keeper.zip",
-  "license": "LICENSE",
-  "readme": "README.md",
-  "bugs": "https://github.com/The-RavenKing/chronicle-keeper/issues",
-  "changelog": "CHANGELOG.md",
-  "media": [
-    {
-      "type": "icon",
-      "url": "https://raw.githubusercontent.com/The-RavenKing/chronicle-keeper/main/assets/icon.png"
-    },
-    {
-      "type": "cover",
-      "url": "https://raw.githubusercontent.com/The-RavenKing/chronicle-keeper/main/assets/cover.png"
-    }
-  ]
-}
+name: Release Module
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - [cite_start]uses: actions/checkout@v3 [cite: 3, 26]
+      
+      - name: Create module archive
+        run: |
+          cd ..
+          zip -r chronicle-keeper.zip Chronicle-Keeper \
+            -x "Chronicle-Keeper/.git/*" \
+            -x "Chronicle-Keeper/.github/*" \
+            -x "Chronicle-Keeper/assets/README.md" [cite: 23, 39]
+      
+      - name: Upload to release
+        [cite_start]uses: actions/upload-release-asset@v1 [cite: 18, 40]
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          [cite_start]upload_url: ${{ github.event.release.upload_url }} [cite: 18, 40]
+          [cite_start]asset_path: ../chronicle-keeper.zip [cite: 18, 40]
+          [cite_start]asset_name: chronicle-keeper.zip [cite: 18, 40]
+          [cite_start]asset_content_type: application/zip [cite: 18, 40]
+      
+      - name: Upload module.json
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./module.json
+          asset_name: module.json
+          asset_content_type: application/json
+      
+      - name: Notify Foundry VTT
+        run: |
+          curl -X POST "https://api.foundryvtt.com/_api/packages/release_version/" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}" \
+            -d '{
+              "id": "chronicle-keeper",
+              "release": {
+                "version": "${{ github.event.release.tag_name }}",
+                "manifest": "https://github.com/The-RavenKing/chronicle-keeper/releases/download/${{ github.event.release.tag_name }}/module.json",
+                "notes": "https://github.com/The-RavenKing/chronicle-keeper/releases/tag/${{ github.event.release.tag_name }}",
+                "compatibility": {
+                  "minimum": "11",
+                  "verified": "13",
+                  "maximum": "13"
+                }
+              }
+            }'
