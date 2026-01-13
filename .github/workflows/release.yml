@@ -37,3 +37,9 @@ jobs:
           asset_path: ./module.json
           asset_name: module.json
           asset_content_type: application/json
+      
+      - name: Notify Foundry VTT
+        uses: cs96and/foundry-publish-release-action@v1
+        with:
+          package-token: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
+          manifest-url: https://github.com/The-RavenKing/chronicle-keeper/releases/latest/download/module.json
