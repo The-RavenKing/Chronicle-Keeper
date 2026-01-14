@@ -69,6 +69,15 @@ Hooks.once('ready', async function() {
         default: ''
     });
     
+    game.settings.register('chronicle-keeper', 'customHeaders', {
+        name: 'Custom Headers (JSON)',
+        hint: 'Optional - Add custom headers for Ollama requests (e.g., for API key authentication). Format: {"Authorization": "Bearer your-key"}',
+        scope: 'world',
+        config: true,
+        type: String,
+        default: ''
+    });
+    
     game.settings.register('chronicle-keeper', 'campaignNotes', {
         name: 'Campaign Notes (for RAG)',
         hint: 'Important campaign information that the AI should remember',
@@ -244,6 +253,27 @@ Hooks.on('deleteCombat', (combat, options, userId) => {
 function getCurrentCampaignKey() {
     const campaignName = game.settings.get('chronicle-keeper', 'currentCampaign');
     return campaignName.trim() === '' ? 'default' : campaignName.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+// Helper function to build request headers with custom headers support
+function buildOllamaHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    const customHeadersJson = game.settings.get('chronicle-keeper', 'customHeaders');
+    if (customHeadersJson && customHeadersJson.trim() !== '') {
+        try {
+            const customHeaders = JSON.parse(customHeadersJson);
+            Object.assign(headers, customHeaders);
+            console.log("Chronicle Keeper | Using custom headers");
+        } catch (error) {
+            console.error("Chronicle Keeper | Invalid custom headers JSON:", error);
+            ui.notifications.warn("Invalid custom headers JSON - using default headers");
+        }
+    }
+    
+    return headers;
 }
 
 // Helper function to get campaign notes
@@ -504,7 +534,7 @@ async function handleAskCommand(question, chatData) {
         
         const response = await fetch(ollamaUrl + '/api/generate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: buildOllamaHeaders(),
             body: JSON.stringify({
                 model: model,
                 prompt: fullPrompt,
@@ -603,7 +633,7 @@ async function handleNPCCommand(npcName, message, chatData) {
         
         const response = await fetch(ollamaUrl + '/api/generate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: buildOllamaHeaders(),
             body: JSON.stringify({
                 model: model,
                 prompt: prompt,
@@ -1028,7 +1058,7 @@ async function handleOOCCommand(question, chatData) {
         
         const response = await fetch(ollamaUrl + '/api/generate', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: buildOllamaHeaders(),
             body: JSON.stringify({ model: model, prompt: oocPrompt, stream: false })
         });
         
