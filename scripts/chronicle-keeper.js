@@ -73,3 +73,17 @@ function updateNPCFromConversation(npcName, playerMessage, npcResponse) {
         console.error(`Error updating NPC journal for ${npcName}:`, error);
     }
 }
+
+async function handleNPCJournalCommand(npcName, conversationText) {
+    try {
+        console.log("Chronicle Keeper | Handling /npcjournal command for:", npcName);
+        
+        // Analyze the conversation text to extract relevant information
+        const analysis = await analyzeNPCFromHistoryOverhauled(npcName, conversationText);
+        
+        // Update the NPC journal with the extracted information
+        updateNPCFromConversation(npcName, "", "");
+    } catch (error) {
+        console.error(`Error handling /npcjournal command for ${npcName}:`, error);
+    }
+}
