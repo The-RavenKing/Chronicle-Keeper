@@ -107,14 +107,23 @@ async function getAnswerFromAI(question) {
     const model = game.settings.get('chronicle-keeper', 'ollamaModel');
     
     // Implement the logic to call the AI and get an answer
-    // Example:
-    // const response = await fetch(ollamaUrl, {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json'
-    //     },
-    //     body: JSON.stringify({ model, prompt: question })
-    // });
-    
-    // return response.json().then(data => data.answer);
+    try {
+        const response = await fetch(ollamaUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ model, prompt: question })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.answer;
+    } catch (error) {
+        console.error("Error calling AI:", error);
+        return "Sorry, I couldn't understand that.";
+    }
 }
