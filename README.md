@@ -2,7 +2,7 @@
 
 **Your Campaign's Perfect Memory**
 
-Chronicle Keeper is an AI-powered campaign assistant for Foundry VTT that automatically remembers every conversation, character, location, and event in your campaign. Using local AI processing via Ollama, it keeps perfect records while maintaining complete privacy.
+##Chronicle Keeper is an AI-powered campaign assistant for Foundry VTT that automatically remembers every conversation, character, location, and event in your campaign. Using local AI processing via Ollama, it keeps perfect records while maintaining complete privacy.
 
 ![Chronicle Keeper](https://img.shields.io/badge/Foundry%20VTT-v11%2B-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
