@@ -87,3 +87,34 @@ async function handleNPCJournalCommand(npcName, conversationText) {
         console.error(`Error handling /npcjournal command for ${npcName}:`, error);
     }
 }
+
+async function handleAskCommand(question) {
+    try {
+        console.log("Chronicle Keeper | Handling /ask command for:", question);
+        
+        // Implement the logic to handle the /ask command
+        const answer = await getAnswerFromAI(question);
+        
+        return answer;
+    } catch (error) {
+        console.error("Error handling /ask command:", error);
+        return "Sorry, I couldn't understand that.";
+    }
+}
+
+async function getAnswerFromAI(question) {
+    const ollamaUrl = game.settings.get('chronicle-keeper', 'ollamaUrl');
+    const model = game.settings.get('chronicle-keeper', 'ollamaModel');
+    
+    // Implement the logic to call the AI and get an answer
+    // Example:
+    // const response = await fetch(ollamaUrl, {
+    //     method: 'POST',
+    //     headers: {
+    //         'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify({ model, prompt: question })
+    // });
+    
+    // return response.json().then(data => data.answer);
+}
