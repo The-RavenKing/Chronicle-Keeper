@@ -114,6 +114,24 @@ Hooks.once('ready', async function() {
         default: 'NPCs (GM Secrets)'
     });
     
+    game.settings.register('chronicle-keeper', 'locationJournalName', {
+        name: 'Player Location Journal Name',
+        hint: 'Name of the journal for player-visible location information',
+        scope: 'world',
+        config: true,
+        type: String,
+        default: 'Locations'
+    });
+    
+    game.settings.register('chronicle-keeper', 'locationJournalGMName', {
+        name: 'GM Location Journal Name',
+        hint: 'Name of the journal for GM-only location secrets',
+        scope: 'world',
+        config: true,
+        type: String,
+        default: 'Locations (GM Secrets)'
+    });
+    
     game.settings.register('chronicle-keeper', 'showWelcomeMessage', {
         name: 'Show Welcome Message on Load',
         hint: 'Display the full command list when Foundry loads. Disable this if you prefer to use /help instead.',
@@ -146,6 +164,8 @@ Hooks.once('ready', async function() {
                     '<li><code>/state [info]</code> - Set current situation context</li>' +
                     '<li><code>/ingest</code> - Learn all journals, characters, scenes!</li>' +
                     '<li><code>/npcjournal</code> - Generate NPC profiles from all chat history ⭐</li>' +
+                    '<li><code>/locationjournal</code> - Generate location profiles from chat history ⭐</li>' +
+                    '<li><code>/alljournals</code> - Generate both NPCs and Locations ⭐⭐</li>' +
                     '<li><code>/help</code> - Show this command list</li>' +
                     '</ul>' +
                     '<p><strong>✨ Use /ooc for meta questions about the game!</strong></p>' +
@@ -999,6 +1019,26 @@ Hooks.on('chatMessage', (chatLog, message, chatData) => {
             return false;
         }
         handleNPCJournalCommand();
+        return false;
+    }
+    
+    // /locationjournal command - generate location profiles from chat history (GM only)
+    if (msgLower === '/locationjournal') {
+        if (!game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /locationjournal');
+            return false;
+        }
+        handleLocationJournalCommand();
+        return false;
+    }
+    
+    // /alljournals command - generate both NPC and location profiles (GM only)
+    if (msgLower === '/alljournals') {
+        if (!game.user.isGM) {
+            ui.notifications.warn('Only GMs can use /alljournals');
+            return false;
+        }
+        handleAllJournalsCommand();
         return false;
     }
     
@@ -2140,6 +2180,539 @@ ${conversationHistory}
     }
 }
 
+// Handle /locationjournal command - generate location profiles from chat history
+async function handleLocationJournalCommand() {
+    console.log("Chronicle Keeper | Generating location journals from chat history");
+    
+    ui.notifications.info("Analyzing chat history for locations...");
+    
+    try {
+        // Get all chat messages
+        const messages = game.messages.contents;
+        
+        // Collect ALL messages for analysis
+        const allMessages = [];
+        
+        for (const msg of messages) {
+            const content = msg.content || '';
+            const timestamp = new Date(msg.timestamp).toLocaleString();
+            
+            if (!content.trim()) continue;
+            
+            allMessages.push({
+                content: stripHTML(content),
+                timestamp: timestamp
+            });
+        }
+        
+        if (allMessages.length === 0) {
+            ui.notifications.warn("No messages found in chat history!");
+            return;
+        }
+        
+        // STEP 1: Use AI to discover locations from chat history
+        console.log("Chronicle Keeper | Step 1: Discovering locations from conversations...");
+        ui.notifications.info("Step 1/2: Discovering locations from chat history...");
+        
+        const recentMessages = allMessages.slice(-200);
+        const chatHistoryText = recentMessages.map(m => 
+            `[${m.timestamp}] ${m.content}`
+        ).join('\n\n');
+        
+        const discoveredLocations = await discoverLocationsFromHistory(chatHistoryText);
+        
+        if (discoveredLocations.length === 0) {
+            ui.notifications.warn("No locations found in chat history!");
+            return;
+        }
+        
+        // STEP 2: Analyze each location
+        console.log("Chronicle Keeper | Step 2: Analyzing location profiles...");
+        ui.notifications.info(`Step 2/2: Analyzing ${discoveredLocations.length} locations...`);
+        
+        await ChatMessage.create({
+            content: '<div style="background: rgba(76,175,80,0.1); padding: 10px; border-left: 3px solid #4caf50;">' +
+                `<strong>🗺️ Found ${discoveredLocations.length} locations in chat history</strong><br>` +
+                `Locations: ${discoveredLocations.join(', ')}<br><br>` +
+                '<em>Processing with AI...</em>' +
+                '</div>',
+            whisper: game.users.filter(u => u.isGM).map(u => u.id)
+        });
+        
+        let successCount = 0;
+        const errors = [];
+        
+        for (const locationName of discoveredLocations) {
+            try {
+                console.log(`Chronicle Keeper | Processing location: ${locationName}`);
+                
+                // Collect all messages mentioning this location
+                const locationMessages = [];
+                for (const msg of allMessages) {
+                    const contentLower = msg.content.toLowerCase();
+                    const locationLower = locationName.toLowerCase();
+                    
+                    if (contentLower.includes(locationLower)) {
+                        locationMessages.push(msg);
+                    }
+                }
+                
+                const locationText = locationMessages.map(m => 
+                    `[${m.timestamp}] ${m.content}`
+                ).join('\n\n');
+                
+                const locationProfile = await analyzeLocationFromHistory(locationName, locationText);
+                await createLocationJournalEntry(locationName, locationProfile, locationMessages);
+                
+                successCount++;
+                
+            } catch (error) {
+                console.error(`Chronicle Keeper | Error processing ${locationName}:`, error);
+                errors.push({ name: locationName, error: error.message });
+            }
+        }
+        
+        // Show completion
+        let resultMessage = '<div style="background: rgba(76,175,80,0.1); padding: 10px; border-left: 3px solid #4caf50;">' +
+            '<strong>✅ Location Journal Generation Complete!</strong><br>' +
+            `Successfully processed ${successCount} locations<br>`;
+        
+        if (errors.length > 0) {
+            resultMessage += `<br><strong>⚠️ Errors (${errors.length}):</strong><br>`;
+            errors.forEach(e => {
+                resultMessage += `• ${e.name}: ${e.error}<br>`;
+            });
+        }
+        
+        resultMessage += '<br><em>Check the "Locations" journal for player-visible profiles.</em><br>' +
+            '<em>Check the "Locations (GM Secrets)" journal for complete information.</em>' +
+            '</div>';
+        
+        await ChatMessage.create({
+            content: resultMessage,
+            whisper: game.users.filter(u => u.isGM).map(u => u.id)
+        });
+        
+        ui.notifications.info(`Location journals created for ${successCount} locations!`);
+        
+    } catch (error) {
+        console.error("Chronicle Keeper | Location Journal error:", error);
+        ui.notifications.error("Failed to generate location journals: " + error.message);
+    }
+}
+
+// Discover locations from chat history
+async function discoverLocationsFromHistory(chatHistoryText) {
+    const ollamaUrl = game.settings.get('chronicle-keeper', 'ollamaUrl');
+    const model = game.settings.get('chronicle-keeper', 'ollamaModel');
+    
+    const discoveryPrompt = `You are analyzing chat history from a tabletop RPG campaign. Identify ALL locations mentioned.
+
+Here is the chat history:
+
+${chatHistoryText}
+
+Identify EVERY location mentioned. This includes:
+- Cities and towns (e.g., Waterdeep, Neverwinter, Baldur's Gate)
+- Buildings and establishments (e.g., The Horse Inn, City Guard Hall, The Prancing Pony)
+- Dungeons and ruins (e.g., The Crypts, Dragon's Lair)
+- Natural locations (e.g., Misty Forest, River Crossing)
+- Regions (e.g., Sword Coast, The North)
+
+Include both the establishment name AND city when both are mentioned (e.g., "The Horse Inn, Waterdeep")
+
+IMPORTANT:
+- Include ALL locations mentioned, no matter how briefly
+- Do NOT include "here", "there", "the place" without specific names
+- Include both specific places (inns, shops) and general areas (cities, forests)
+
+Provide your answer in this EXACT format (one location per line, no brackets):
+
+LOCATION_LIST:
+Location Name 1
+Location Name 2
+Location Name 3
+
+If no locations found, respond: LOCATION_LIST:\nNONE`;
+
+    try {
+        const response = await fetch(ollamaUrl + '/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                prompt: discoveryPrompt,
+                stream: false
+            })
+        });
+        
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        
+        const data = await response.json();
+        return parseLocationList(data.response);
+        
+    } catch (error) {
+        console.error("Chronicle Keeper | Error discovering locations:", error);
+        return [];
+    }
+}
+
+// Parse location list from AI response
+function parseLocationList(aiResponse) {
+    const locationList = [];
+    const lines = aiResponse.split('\n');
+    let inList = false;
+    
+    for (const line of lines) {
+        const trimmed = line.trim();
+        
+        if (trimmed === 'LOCATION_LIST:') {
+            inList = true;
+            continue;
+        }
+        
+        if (inList && trimmed && trimmed !== 'NONE') {
+            let locationName = trimmed.replace(/^[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim();
+            locationName = locationName.replace(/^\[|\]$/g, ''); // Remove brackets
+            
+            if (locationName && locationName.length > 1) {
+                locationList.push(locationName);
+            }
+        }
+    }
+    
+    return locationList;
+}
+
+// Analyze location from chat history
+async function analyzeLocationFromHistory(locationName, conversationText) {
+    const ollamaUrl = game.settings.get('chronicle-keeper', 'ollamaUrl');
+    const model = game.settings.get('chronicle-keeper', 'ollamaModel');
+    
+    const analysisPrompt = `Extract information about the location "${locationName}" from these messages:
+
+${conversationText}
+
+RULES:
+- Extract ONLY what is explicitly stated
+- Do NOT invent details
+- Do NOT put brackets around answers
+- If not stated, write: Unknown
+
+Extract these fields (no brackets):
+
+NAME: ${locationName}
+TYPE: Type of location (city, tavern, dungeon, forest, building, etc.), or Unknown
+REGION: What region/area it's in, or Unknown
+
+DESCRIPTION:
+Physical description of the location. What does it look like? Atmosphere? Notable features? If nothing: No description available.
+
+NPCS_PRESENT:
+NPCs who are found here, work here, or are associated with this location. If none: No NPCs mentioned.
+
+EVENTS:
+What happened here? Encounters, discoveries, conversations? If nothing: No events recorded.
+
+CONNECTIONS:
+Nearby locations, how to get here, travel routes. If nothing: No connections mentioned.
+
+NOTES:
+Any other important information about this location. If nothing: No additional notes.`;
+
+    try {
+        const response = await fetch(ollamaUrl + '/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                prompt: analysisPrompt,
+                stream: false
+            })
+        });
+        
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        
+        const data = await response.json();
+        return parseLocationProfile(data.response);
+        
+    } catch (error) {
+        console.error(`Chronicle Keeper | Error analyzing ${locationName}:`, error);
+        return {
+            name: locationName,
+            type: "Unknown",
+            region: "Unknown",
+            description: "No description available.",
+            npcsPresent: "No NPCs mentioned.",
+            events: "No events recorded.",
+            connections: "No connections mentioned.",
+            notes: "No additional notes."
+        };
+    }
+}
+
+// Parse location profile
+function parseLocationProfile(aiResponse) {
+    const profile = {
+        name: "",
+        type: "Unknown",
+        region: "Unknown",
+        description: "No description available.",
+        npcsPresent: "No NPCs mentioned.",
+        events: "No events recorded.",
+        connections: "No connections mentioned.",
+        notes: "No additional notes."
+    };
+    
+    const lines = aiResponse.split('\n');
+    let currentSection = null;
+    let sectionContent = [];
+    
+    for (const line of lines) {
+        const trimmed = line.trim();
+        
+        if (trimmed.startsWith('NAME:')) {
+            profile.name = trimmed.substring(5).trim().replace(/^\[|\]$/g, '');
+        } else if (trimmed.startsWith('TYPE:')) {
+            profile.type = trimmed.substring(5).trim().replace(/^\[|\]$/g, '');
+        } else if (trimmed.startsWith('REGION:')) {
+            profile.region = trimmed.substring(7).trim().replace(/^\[|\]$/g, '');
+        } else if (trimmed.startsWith('DESCRIPTION:')) {
+            currentSection = 'description';
+            sectionContent = [];
+        } else if (trimmed.startsWith('NPCS_PRESENT:')) {
+            if (currentSection === 'description') {
+                profile.description = sectionContent.join(' ').trim();
+            }
+            currentSection = 'npcsPresent';
+            sectionContent = [];
+        } else if (trimmed.startsWith('EVENTS:')) {
+            if (currentSection === 'npcsPresent') {
+                profile.npcsPresent = sectionContent.join(' ').trim();
+            }
+            currentSection = 'events';
+            sectionContent = [];
+        } else if (trimmed.startsWith('CONNECTIONS:')) {
+            if (currentSection === 'events') {
+                profile.events = sectionContent.join(' ').trim();
+            }
+            currentSection = 'connections';
+            sectionContent = [];
+        } else if (trimmed.startsWith('NOTES:')) {
+            if (currentSection === 'connections') {
+                profile.connections = sectionContent.join(' ').trim();
+            }
+            currentSection = 'notes';
+            sectionContent = [];
+        } else if (currentSection && trimmed.length > 0) {
+            sectionContent.push(trimmed);
+        }
+    }
+    
+    // Capture last section
+    if (currentSection === 'notes') {
+        profile.notes = sectionContent.join(' ').trim();
+    } else if (currentSection === 'connections') {
+        profile.connections = sectionContent.join(' ').trim();
+    } else if (currentSection === 'events') {
+        profile.events = sectionContent.join(' ').trim();
+    } else if (currentSection === 'npcsPresent') {
+        profile.npcsPresent = sectionContent.join(' ').trim();
+    } else if (currentSection === 'description') {
+        profile.description = sectionContent.join(' ').trim();
+    }
+    
+    return profile;
+}
+
+// Create location journal entries
+async function createLocationJournalEntry(locationName, profile, messages) {
+    const playerJournal = await getOrCreateLocationJournal(false);
+    const gmJournal = await getOrCreateLocationJournal(true);
+    
+    const playerContent = `
+<h1>${profile.name || locationName}</h1>
+<p><strong>Type:</strong> ${profile.type}</p>
+<p><strong>Region:</strong> ${profile.region}</p>
+
+<h2>Description</h2>
+<div class="description">
+<p>${profile.description}</p>
+</div>
+
+<h2>NPCs Present</h2>
+<div class="npcs-present">
+<p>${profile.npcsPresent}</p>
+</div>
+
+<h2>Events</h2>
+<div class="events">
+<p>${profile.events}</p>
+</div>
+
+<h2>Connections</h2>
+<div class="connections">
+<p>${profile.connections}</p>
+</div>
+
+<h2>Notes</h2>
+<div class="notes">
+<p>${profile.notes}</p>
+</div>
+
+<hr>
+<p><em>Last updated: ${new Date().toLocaleString()}</em></p>
+<p><em>Generated from ${messages.length} mention${messages.length !== 1 ? 's' : ''}</em></p>
+`;
+    
+    const messageHistory = messages.map(m => 
+        `<div style="margin-bottom: 10px; padding: 8px; background: rgba(0,0,0,0.05);">
+<strong>${m.timestamp}</strong><br>
+${m.content}
+</div>`
+    ).join('\n');
+    
+    const gmContent = `
+<h1>${profile.name || locationName} (GM Notes)</h1>
+<p><strong>Type:</strong> ${profile.type}</p>
+<p><strong>Region:</strong> ${profile.region}</p>
+
+<h2>Description</h2>
+<div class="description">
+<p>${profile.description}</p>
+</div>
+
+<h2>NPCs Present</h2>
+<div class="npcs-present">
+<p>${profile.npcsPresent}</p>
+</div>
+
+<h2>Events</h2>
+<div class="events">
+<p>${profile.events}</p>
+</div>
+
+<h2>Connections</h2>
+<div class="connections">
+<p>${profile.connections}</p>
+</div>
+
+<h2>Notes</h2>
+<div class="notes">
+<p>${profile.notes}</p>
+</div>
+
+<h2>GM Secrets & Plans</h2>
+<div class="gm-secrets">
+<p><em>Add your secret notes, planned encounters, hidden treasures...</em></p>
+</div>
+
+<h2>Complete Message History</h2>
+<div class="full-history">
+${messageHistory}
+</div>
+
+<hr>
+<p><em>Last updated: ${new Date().toLocaleString()}</em></p>
+<p><em>Total mentions: ${messages.length}</em></p>
+`;
+    
+    let playerPage = playerJournal.pages.find(p => p.name === locationName || p.name === profile.name);
+    let gmPage = gmJournal.pages.find(p => p.name === locationName || p.name === profile.name);
+    
+    if (playerPage) {
+        await playerPage.update({ 'text.content': playerContent });
+    } else {
+        await playerJournal.createEmbeddedDocuments('JournalEntryPage', [{
+            name: profile.name || locationName,
+            type: 'text',
+            text: { content: playerContent, format: 1 },
+            ownership: { default: 2 }
+        }]);
+    }
+    
+    if (gmPage) {
+        await gmPage.update({ 'text.content': gmContent });
+    } else {
+        await gmJournal.createEmbeddedDocuments('JournalEntryPage', [{
+            name: profile.name || locationName,
+            type: 'text',
+            text: { content: gmContent, format: 1 },
+            ownership: { default: 0 }
+        }]);
+    }
+}
+
+// Get or create location journal
+async function getOrCreateLocationJournal(isGMVersion) {
+    const journalName = isGMVersion 
+        ? game.settings.get('chronicle-keeper', 'locationJournalGMName')
+        : game.settings.get('chronicle-keeper', 'locationJournalName');
+    
+    let journal = game.journal.find(j => j.name === journalName);
+    
+    if (!journal) {
+        journal = await JournalEntry.create({
+            name: journalName,
+            ownership: isGMVersion ? { default: 0 } : { default: 2 }
+        });
+        console.log(`Chronicle Keeper | Created ${isGMVersion ? 'GM' : 'Player'} location journal: ${journalName}`);
+    }
+    
+    return journal;
+}
+
+// Handle /alljournals command - run both NPC and location journal generation
+async function handleAllJournalsCommand() {
+    console.log("Chronicle Keeper | Generating all journals from chat history");
+    
+    ui.notifications.info("Generating NPC and Location journals...");
+    
+    await ChatMessage.create({
+        content: '<div style="border: 2px solid #ff6400; padding: 10px; background: rgba(255,100,0,0.1);">' +
+            '<h3>📚 Generating All Journals</h3>' +
+            '<p>This will process both NPCs and Locations from chat history.</p>' +
+            '<p><em>Please wait, this may take a few minutes...</em></p>' +
+            '</div>',
+        whisper: game.users.filter(u => u.isGM).map(u => u.id)
+    });
+    
+    try {
+        // Run NPC journal generation
+        console.log("Chronicle Keeper | Running NPC journal generation...");
+        await handleNPCJournalCommand();
+        
+        // Wait a moment between operations
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Run Location journal generation
+        console.log("Chronicle Keeper | Running Location journal generation...");
+        await handleLocationJournalCommand();
+        
+        // Final completion message
+        await ChatMessage.create({
+            content: '<div style="background: rgba(76,175,80,0.1); padding: 10px; border-left: 3px solid #4caf50;">' +
+                '<h3>✅ All Journals Generated!</h3>' +
+                '<p>Both NPC and Location journals have been created/updated.</p>' +
+                '<p><strong>Check these journals:</strong></p>' +
+                '<ul>' +
+                '<li>NPCs (player-visible)</li>' +
+                '<li>NPCs (GM Secrets)</li>' +
+                '<li>Locations (player-visible)</li>' +
+                '<li>Locations (GM Secrets)</li>' +
+                '</ul>' +
+                '</div>',
+            whisper: game.users.filter(u => u.isGM).map(u => u.id)
+        });
+        
+        ui.notifications.info("All journals generated successfully!");
+        
+    } catch (error) {
+        console.error("Chronicle Keeper | All Journals error:", error);
+        ui.notifications.error("Failed to generate all journals: " + error.message);
+    }
+}
+
 // Handle /help command - show command list
 function handleHelpCommand() {
     const gmOnlyMode = game.settings.get('chronicle-keeper', 'gmOnlyMode');
@@ -2162,6 +2735,14 @@ function handleHelpCommand() {
             '<li><code>/npcjournal</code> - Generate NPC profiles from chat history (GM only)</li>' +
             '<li><code>/npc-secret [Name]: [info]</code> - Add GM-only secrets to NPC (GM only)</li>' +
             '<li><code>/npc-merge [Name1] and [Name2]</code> - Merge two NPC identities (GM only)</li>' +
+            '</ul>' +
+            '<p><strong>Locations:</strong></p>' +
+            '<ul>' +
+            '<li><code>/locationjournal</code> - Generate location profiles from chat history (GM only)</li>' +
+            '</ul>' +
+            '<p><strong>Combined:</strong></p>' +
+            '<ul>' +
+            '<li><code>/alljournals</code> - Generate both NPC and Location journals (GM only)</li>' +
             '</ul>' +
             '<p><strong>Memory & State:</strong></p>' +
             '<ul>' +
@@ -2237,4 +2818,4 @@ async function handleOOCCommand(question, chatData) {
 console.log("Chronicle Keeper | Script loaded successfully");
 
 // Export for ES6 module compatibility
-export { handleAskCommand, handleNPCCommand, handleRememberCommand, handleRecallCommand, handleHistoryCommand, handleClearHistoryCommand, handleCampaignsCommand, handleIngestCommand, handleViewStateCommand, handleSetStateCommand, handleClearStateCommand, handleOOCCommand, handleNPCJournalCommand, handleHelpCommand };
+export { handleAskCommand, handleNPCCommand, handleRememberCommand, handleRecallCommand, handleHistoryCommand, handleClearHistoryCommand, handleCampaignsCommand, handleIngestCommand, handleViewStateCommand, handleSetStateCommand, handleClearStateCommand, handleOOCCommand, handleNPCJournalCommand, handleLocationJournalCommand, handleAllJournalsCommand, handleHelpCommand };
