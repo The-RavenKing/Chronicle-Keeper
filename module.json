@@ -1,7 +1,7 @@
 {
   "id": "chronicle-keeper",
   "title": "Chronicle Keeper",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "compatibility": {
     "minimum": "11",
     "verified": "13",
