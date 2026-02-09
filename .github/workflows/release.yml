@@ -1,0 +1,49 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create module.zip
+        run: |
+          # Create zip excluding git files and github workflows
+          zip -r module.zip . -x "*.git*" -x ".github/*" -x "*.md" -x ".gitignore"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Chronicle Keeper v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## Chronicle Keeper v${{ steps.get_version.outputs.VERSION }}
+            
+            ### Installation
+            1. Download `module.zip`
+            2. Extract to your Foundry VTT `Data/modules/chronicle-keeper` folder
+            3. Restart Foundry and enable the module
+            
+            ### Manifest URL
+            ```
+            https://github.com/${{ github.repository }}/releases/download/v${{ steps.get_version.outputs.VERSION }}/module.json
+            ```
+          files: |
+            module.zip
+            module.json
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
