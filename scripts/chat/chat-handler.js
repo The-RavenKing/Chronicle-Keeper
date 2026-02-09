@@ -113,8 +113,13 @@ export class ChatHandler {
 
                 // Store response in memory
                 await this.memory.addMessage('assistant', response);
-            }
 
+                // Trigger dynamic entity updates in background
+                const updatedHistory = this.memory.getConversationHistory();
+                this.memory.processEntityUpdates(updatedHistory, context.entities).catch(err => {
+                    console.error(`${MODULE_NAME} | Failed to process entity updates:`, err);
+                });
+            }
         } catch (error) {
             console.error(`${MODULE_NAME} | Chat handler error:`, error);
             ui.notifications.error(game.i18n.localize('CHRONICLE_KEEPER.Chat.ResponseError'));
@@ -234,14 +239,15 @@ ${this.memory.formatContextForPrompt(context)}`;
     /**
      * Have an NPC speak
      */
+    /**
+     * Have an NPC speak
+     */
     async npcSpeak(npcName, context) {
         if (!this.ollama?.connected) return;
 
         // Look up NPC in memory
         const npc = this.memory.entities.get('npcs', npcName);
-        const npcContext = npc
-            ? `NPC: ${npc.name}. ${npc.description || ''} Personality: ${npc.personality || 'unknown'}.`
-            : `NPC named ${npcName}`;
+        const npcContext = this._buildNPCContext(npc, npcName);
 
         const prompt = `Respond as the NPC ${npcName}. Stay in character.
     
@@ -296,9 +302,7 @@ Context: ${context}`;
 
         // Look up NPC in memory for personality/context
         const npc = this.memory.entities.get('npcs', npcName);
-        const npcContext = npc
-            ? `You are ${npc.name}. ${npc.description || ''} Personality: ${npc.personality || 'neutral'}. Occupation: ${npc.occupation || 'unknown'}.`
-            : `You are an NPC named ${npcName}. Respond in character based on context.`;
+        const npcContext = this._buildNPCContext(npc, npcName);
 
         // Get recent conversation context
         const memoryContext = await this.memory.getContext(playerDialogue);
@@ -350,5 +354,33 @@ ${this.memory.formatContextForPrompt(memoryContext)}`;
             console.error(`${MODULE_NAME} | NPC respond error:`, error);
             ui.notifications.error(`NPC response failed: ${error.message}`);
         }
+    }
+
+    /**
+     * Helper to build full NPC context string
+     * @param {Object} npc - NPC entity object
+     * @param {string} npcName - Fallback name if npc object is null
+     * @returns {string} Formatted context string
+     */
+    _buildNPCContext(npc, npcName) {
+        if (!npc) {
+            return `You are an NPC named ${npcName}. Respond in character based on context.`;
+        }
+
+        const lines = [`You are ${npc.name}.`];
+
+        if (npc.description) lines.push(npc.description);
+        if (npc.personality) lines.push(`Personality: ${npc.personality}`);
+        if (npc.occupation) lines.push(`Occupation: ${npc.occupation}`);
+        if (npc.motivation) lines.push(`Motivation: ${npc.motivation}`);
+        if (npc.faction) lines.push(`Faction: ${npc.faction}`);
+        if (npc.notes) lines.push(`Notes: ${npc.notes}`);
+
+        if (npc.relationships && npc.relationships.length > 0) {
+            const rels = npc.relationships.map(r => `${r.targetId}: ${r.relationship}`).join('; ');
+            lines.push(`Relationships: ${rels}`);
+        }
+
+        return lines.join(' ');
     }
 }

@@ -36,7 +36,9 @@ export class ActorBridge {
         const data = actor.system;
         const lines = [];
 
-        lines.push(`**${actor.name}** - Level ${data.details?.level || '?'} ${data.details?.race || ''} ${actor.classes?.map(c => c.name).join('/') || ''}`);
+        // D&D 5e v4+ classes are items
+        const classes = actor.items.filter(i => i.type === 'class');
+        lines.push(`**${actor.name}** - Level ${data.details?.level || '?'} ${data.details?.race || ''} ${classes.map(c => c.name).join('/') || ''}`);
 
         // Stats
         const abilities = data.abilities || {};

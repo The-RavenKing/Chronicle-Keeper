@@ -11,6 +11,7 @@ import { LongTermMemory } from './long-term.js';
 import { EntityMemory } from './entity-memory.js';
 import { VectorStore } from './vector-store.js';
 import { Summarizer } from './summarizer.js';
+import { MemoryProcessor } from './memory-processor.js';
 
 /**
  * Memory types enumeration
@@ -58,6 +59,9 @@ export class MemoryManager {
         /** @type {Summarizer} */
         this.summarizer = new Summarizer();
 
+        /** @type {MemoryProcessor} */
+        this.processor = null; // Initialized in setup
+
         /** @type {boolean} */
         this.initialized = false;
     }
@@ -80,6 +84,14 @@ export class MemoryManager {
 
             this.initialized = true;
             console.log(`${MODULE_NAME} | Memory system initialized`);
+
+            // Initialize processor if connected
+            if (ChronicleKeeper.ollama) {
+                this.processor = new MemoryProcessor({
+                    ollama: ChronicleKeeper.ollama,
+                    entities: this.entities
+                });
+            }
 
         } catch (error) {
             console.error(`${MODULE_NAME} | Memory initialization error:`, error);
@@ -116,6 +128,20 @@ export class MemoryManager {
             type: MemoryType.CONVERSATION,
             timestamp: Date.now()
         });
+    }
+
+    /**
+     * Trigger entity update processing
+     * @param {Array} history - Recent conversation
+     * @param {Object} contextEntities - Entities in context
+     */
+    async processEntityUpdates(history, contextEntities) {
+        if (this.processor) {
+            // Process in background (no await)
+            this.processor.processConversation(history, contextEntities).catch(err => {
+                console.error(`${MODULE_NAME} | Entity update processing failed:`, err);
+            });
+        }
     }
 
     /**
