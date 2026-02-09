@@ -2,7 +2,7 @@
   "id": "chronicle-keeper",
   "title": "Chronicle Keeper - AI Dungeon Master",
   "description": "An AI-powered Dungeon Master using Ollama for local LLM hosting, featuring robust memory management for long-term campaign continuity.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "compatibility": {
     "minimum": "11",
     "verified": "13"
