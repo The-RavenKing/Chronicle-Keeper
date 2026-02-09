@@ -432,6 +432,21 @@ class MemoryBrowserApplication extends FormApplication {
                     <textarea name="notes" rows="2"></textarea>
                 </div>
             `;
+        } else if (type === 'items') {
+            formFields += `
+                <div class="form-group">
+                    <label>Properties</label>
+                    <input type="text" name="properties" placeholder="e.g. magical, cursed, rare">
+                </div>
+                <div class="form-group">
+                    <label>Location/Owner</label>
+                    <input type="text" name="location">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" rows="2"></textarea>
+                </div>
+            `;
         } else if (type === 'factions') {
             formFields += `
                 <div class="form-group">
