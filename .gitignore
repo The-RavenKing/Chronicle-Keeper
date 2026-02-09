@@ -1,0 +1,22 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+
+# VSCode
+.vscode/
+
+# Foundry VTT
+foundry-vtt-types/
+
+# Build output
+dist/
+
+# Env
+.env
+
+# Logs
+*.log

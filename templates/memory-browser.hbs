@@ -1,0 +1,176 @@
+<div class="chronicle-keeper-memory-browser">
+    <nav class="tabs" data-group="memory-tabs">
+        <a class="item active" data-tab="short-term">Short-term</a>
+        <a class="item" data-tab="long-term">Long-term</a>
+        <a class="item" data-tab="npcs">NPCs</a>
+        <a class="item" data-tab="locations">Locations</a>
+        <a class="item" data-tab="items">Items</a>
+        <a class="item" data-tab="factions">Factions</a>
+    </nav>
+
+    <div class="search-bar">
+        <input type="text" class="search-input" placeholder="{{localize 'CHRONICLE_KEEPER.Memory.Browser.Search'}}">
+    </div>
+
+    <section class="tab-content">
+        <!-- Short-term Memory -->
+        <div class="tab active" data-tab="short-term">
+            <div class="memory-actions">
+                <button class="chronicle-keeper-btn danger small clear-short-term">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+            <div class="memory-list">
+                {{#each shortTermMemory}}
+                <div class="memory-item">
+                    <div class="memory-header">
+                        <span class="memory-type">{{this.role}}</span>
+                        <span class="memory-date">{{formatDate this.timestamp}}</span>
+                    </div>
+                    <div class="memory-content">{{this.content}}</div>
+                    <div class="memory-actions">
+                        <button class="chronicle-keeper-btn small delete-memory" data-type="short-term"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{else}}
+                <p class="no-memories">{{localize "CHRONICLE_KEEPER.Memory.Browser.NoMemories"}}</p>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- Long-term Memory -->
+        <div class="tab" data-tab="long-term">
+            <div class="memory-list">
+                {{#each longTermMemory}}
+                <div class="memory-item">
+                    <div class="memory-header">
+                        <span class="memory-type">{{this.type}}</span>
+                        <span class="memory-importance {{this.importance}}">{{this.importance}}</span>
+                        <span class="memory-date">{{formatDate this.timestamp}}</span>
+                    </div>
+                    <div class="memory-content">{{this.content}}</div>
+                    <div class="memory-actions">
+                        <button class="chronicle-keeper-btn small edit-memory" data-type="long-term"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="chronicle-keeper-btn small delete-memory" data-type="long-term"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{else}}
+                <p class="no-memories">{{localize "CHRONICLE_KEEPER.Memory.Browser.NoMemories"}}</p>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- NPCs -->
+        <div class="tab" data-tab="npcs">
+            <button class="chronicle-keeper-btn primary small add-entity" data-type="npcs">
+                <i class="fas fa-plus"></i> Add NPC
+            </button>
+            <div class="entity-list">
+                {{#each npcs}}
+                <div class="chronicle-keeper-entity npc">
+                    <div class="entity-type">NPC</div>
+                    <div class="entity-name">{{this.name}}</div>
+                    <div class="entity-description">{{this.description}}</div>
+                    {{#if this.personality}}<div><strong>Personality:</strong> {{this.personality}}</div>{{/if}}
+                    {{#if this.location}}<div><strong>Location:</strong> {{this.location}}</div>{{/if}}
+                    <div class="memory-actions">
+                        <button class="chronicle-keeper-btn small edit-memory" data-type="npcs"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="chronicle-keeper-btn small delete-memory" data-type="npcs"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{else}}
+                <p class="no-memories">No NPCs recorded yet.</p>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- Locations -->
+        <div class="tab" data-tab="locations">
+            <button class="chronicle-keeper-btn primary small add-entity" data-type="locations">
+                <i class="fas fa-plus"></i> Add Location
+            </button>
+            <div class="entity-list">
+                {{#each locations}}
+                <div class="chronicle-keeper-entity location">
+                    <div class="entity-type">Location</div>
+                    <div class="entity-name">{{this.name}}</div>
+                    <div class="entity-description">{{this.description}}</div>
+                    {{#if this.features}}<div><strong>Features:</strong> {{this.features}}</div>{{/if}}
+                    <div class="memory-actions">
+                        <button class="chronicle-keeper-btn small delete-memory" data-type="locations"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{else}}
+                <p class="no-memories">No locations recorded yet.</p>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div class="tab" data-tab="items">
+            <button class="chronicle-keeper-btn primary small add-entity" data-type="items">
+                <i class="fas fa-plus"></i> Add Item
+            </button>
+            <div class="entity-list">
+                {{#each items}}
+                <div class="chronicle-keeper-entity item">
+                    <div class="entity-type">Item</div>
+                    <div class="entity-name">{{this.name}}</div>
+                    <div class="entity-description">{{this.description}}</div>
+                    <div class="memory-actions">
+                        <button class="chronicle-keeper-btn small delete-memory" data-type="items"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{else}}
+                <p class="no-memories">No items recorded yet.</p>
+                {{/each}}
+            </div>
+        </div>
+
+        <!-- Factions -->
+        <div class="tab" data-tab="factions">
+            <button class="chronicle-keeper-btn primary small add-entity" data-type="factions">
+                <i class="fas fa-plus"></i> Add Faction
+            </button>
+            <div class="entity-list">
+                {{#each factions}}
+                <div class="chronicle-keeper-entity faction">
+                    <div class="entity-type">Faction</div>
+                    <div class="entity-name">{{this.name}}</div>
+                    <div class="entity-description">{{this.description}}</div>
+                    {{#if this.goals}}<div><strong>Goals:</strong> {{this.goals}}</div>{{/if}}
+                    <div class="memory-actions">
+                        <button class="chronicle-keeper-btn small delete-memory" data-type="factions"
+                            data-index="{{this.index}}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {{else}}
+                <p class="no-memories">No factions recorded yet.</p>
+                {{/each}}
+            </div>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,903 @@
+/* Chronicle Keeper - AI Dungeon Master Styles */
+
+/* ===== Variables ===== */
+:root {
+  --ck-primary: #8b5cf6;
+  --ck-primary-dark: #7c3aed;
+  --ck-primary-light: #a78bfa;
+  --ck-secondary: #06b6d4;
+  --ck-accent: #f59e0b;
+  --ck-success: #10b981;
+  --ck-warning: #f59e0b;
+  --ck-error: #ef4444;
+  --ck-bg-dark: #1e1b2e;
+  --ck-bg-medium: #2d2a3e;
+  --ck-bg-light: #3d3a4e;
+  --ck-text: #e2e8f0;
+  --ck-text-muted: #94a3b8;
+  --ck-border: #4b5563;
+  --ck-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --ck-radius: 8px;
+  --ck-transition: 0.2s ease-in-out;
+}
+
+/* ===== Chat Message Styles ===== */
+.chronicle-keeper-message {
+  background: linear-gradient(135deg, var(--ck-bg-dark), var(--ck-bg-medium));
+  border-left: 4px solid var(--ck-primary);
+  border-radius: var(--ck-radius);
+  padding: 12px 16px;
+  margin: 8px 0;
+  box-shadow: var(--ck-shadow);
+  position: relative;
+  animation: ck-fade-in 0.3s ease-out;
+  color: var(--ck-text);
+  /* Enforce text color on container */
+}
+
+/* Ensure all child elements inherit or use light text */
+.chronicle-keeper-message p,
+.chronicle-keeper-message ul,
+.chronicle-keeper-message li,
+.chronicle-keeper-message h3,
+.chronicle-keeper-message h4,
+.chronicle-keeper-message strong,
+.chronicle-keeper-message em {
+  color: var(--ck-text);
+}
+
+.chronicle-keeper-message code {
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--ck-primary-light);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.chronicle-keeper-message::before {
+  content: "🎭 Chronicle Keeper";
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ck-primary-light);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chronicle-keeper-message .message-content {
+  color: var(--ck-text);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.chronicle-keeper-message.narration {
+  border-left-color: var(--ck-secondary);
+  font-style: italic;
+}
+
+.chronicle-keeper-message.narration::before {
+  content: "📜 Narration";
+  color: var(--ck-secondary);
+}
+
+.chronicle-keeper-message.npc-speech {
+  border-left-color: var(--ck-accent);
+}
+
+.chronicle-keeper-message.npc-speech::before {
+  content: attr(data-npc-name);
+  color: var(--ck-accent);
+}
+
+.chronicle-keeper-message.combat {
+  border-left-color: var(--ck-error);
+}
+
+.chronicle-keeper-message.combat::before {
+  content: "⚔️ Combat";
+  color: var(--ck-error);
+}
+
+/* ===== Thinking Indicator ===== */
+.chronicle-keeper-thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--ck-bg-medium);
+  border-radius: var(--ck-radius);
+  color: var(--ck-text-muted);
+  font-style: italic;
+}
+
+.chronicle-keeper-thinking .dots {
+  display: flex;
+  gap: 4px;
+}
+
+.chronicle-keeper-thinking .dot {
+  width: 8px;
+  height: 8px;
+  background: var(--ck-primary);
+  border-radius: 50%;
+  animation: ck-bounce 1.4s infinite ease-in-out both;
+}
+
+.chronicle-keeper-thinking .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.chronicle-keeper-thinking .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.chronicle-keeper-thinking .dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+/* ===== Connection Status ===== */
+.chronicle-keeper-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--ck-radius);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.chronicle-keeper-status.connected {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--ck-success);
+  border: 1px solid var(--ck-success);
+}
+
+.chronicle-keeper-status.disconnected {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--ck-error);
+  border: 1px solid var(--ck-error);
+}
+
+.chronicle-keeper-status .status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.chronicle-keeper-status.connected .status-dot {
+  animation: ck-pulse 2s infinite;
+}
+
+/* ===== Memory Browser ===== */
+.chronicle-keeper-memory-browser {
+  background: var(--ck-bg-dark);
+  color: var(--ck-text);
+  padding: 16px;
+  min-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.chronicle-keeper-memory-browser .tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--ck-border);
+  padding-bottom: 8px;
+}
+
+.chronicle-keeper-memory-browser .tab {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: var(--ck-text-muted);
+  cursor: pointer;
+  border-radius: var(--ck-radius) var(--ck-radius) 0 0;
+  transition: var(--ck-transition);
+}
+
+.chronicle-keeper-memory-browser .tab:hover {
+  background: var(--ck-bg-light);
+  color: var(--ck-text);
+}
+
+.chronicle-keeper-memory-browser .tab.active {
+  background: var(--ck-primary);
+  color: white;
+}
+
+.chronicle-keeper-memory-browser .search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chronicle-keeper-memory-browser .search-bar input {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--ck-bg-medium);
+  border: 1px solid var(--ck-border);
+  border-radius: var(--ck-radius);
+  color: var(--ck-text);
+  font-size: 0.9rem;
+}
+
+.chronicle-keeper-memory-browser .search-bar input:focus {
+  outline: none;
+  border-color: var(--ck-primary);
+}
+
+.chronicle-keeper-memory-browser .memory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chronicle-keeper-memory-browser .memory-item {
+  background: var(--ck-bg-medium);
+  border-radius: var(--ck-radius);
+  padding: 12px;
+  border-left: 3px solid var(--ck-primary);
+  transition: var(--ck-transition);
+}
+
+.chronicle-keeper-memory-browser .memory-item:hover {
+  background: var(--ck-bg-light);
+}
+
+.chronicle-keeper-memory-browser .memory-item .memory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.chronicle-keeper-memory-browser .memory-item .memory-type {
+  font-size: 0.75rem;
+  background: var(--ck-primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.chronicle-keeper-memory-browser .memory-item .memory-date {
+  font-size: 0.75rem;
+  color: var(--ck-text-muted);
+}
+
+.chronicle-keeper-memory-browser .memory-item .memory-content {
+  color: var(--ck-text);
+  line-height: 1.5;
+}
+
+.chronicle-keeper-memory-browser .memory-item .memory-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+/* ===== Entity Cards ===== */
+.chronicle-keeper-entity {
+  background: var(--ck-bg-medium);
+  border-radius: var(--ck-radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--ck-border);
+  transition: var(--ck-transition);
+}
+
+.chronicle-keeper-entity:hover {
+  border-color: var(--ck-primary);
+  box-shadow: var(--ck-shadow);
+}
+
+.chronicle-keeper-entity.npc {
+  border-left: 4px solid var(--ck-accent);
+}
+
+.chronicle-keeper-entity.location {
+  border-left: 4px solid var(--ck-success);
+}
+
+.chronicle-keeper-entity.item {
+  border-left: 4px solid var(--ck-secondary);
+}
+
+.chronicle-keeper-entity.faction {
+  border-left: 4px solid var(--ck-primary);
+}
+
+.chronicle-keeper-entity .entity-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ck-text);
+  margin-bottom: 8px;
+}
+
+.chronicle-keeper-entity .entity-type {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--ck-text-muted);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.chronicle-keeper-entity .entity-description {
+  color: var(--ck-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ===== Settings Panel ===== */
+.chronicle-keeper-settings .form-group {
+  margin-bottom: 16px;
+}
+
+.chronicle-keeper-settings label {
+  display: block;
+  font-weight: 500;
+  color: var(--ck-text);
+  margin-bottom: 6px;
+}
+
+.chronicle-keeper-settings input,
+.chronicle-keeper-settings select,
+.chronicle-keeper-settings textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--ck-bg-medium);
+  border: 1px solid var(--ck-border);
+  border-radius: var(--ck-radius);
+  color: var(--ck-text);
+  font-size: 0.9rem;
+  transition: var(--ck-transition);
+}
+
+.chronicle-keeper-settings input:focus,
+.chronicle-keeper-settings select:focus,
+.chronicle-keeper-settings textarea:focus {
+  outline: none;
+  border-color: var(--ck-primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.chronicle-keeper-settings textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: monospace;
+}
+
+.chronicle-keeper-settings .hint {
+  font-size: 0.8rem;
+  color: var(--ck-text-muted);
+  margin-top: 4px;
+}
+
+/* ===== Buttons ===== */
+.chronicle-keeper-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--ck-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--ck-transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chronicle-keeper-btn.primary {
+  background: var(--ck-primary);
+  color: white;
+}
+
+.chronicle-keeper-btn.primary:hover {
+  background: var(--ck-primary-dark);
+  transform: translateY(-1px);
+}
+
+.chronicle-keeper-btn.secondary {
+  background: var(--ck-bg-light);
+  color: var(--ck-text);
+}
+
+.chronicle-keeper-btn.secondary:hover {
+  background: var(--ck-bg-medium);
+}
+
+.chronicle-keeper-btn.danger {
+  background: var(--ck-error);
+  color: white;
+}
+
+.chronicle-keeper-btn.danger:hover {
+  background: #dc2626;
+}
+
+.chronicle-keeper-btn.small {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* Settings Page Buttons */
+.chronicle-keeper-buttons {
+  margin: 0.5rem 0;
+}
+
+.chronicle-keeper-buttons .form-fields {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chronicle-keeper-test-btn,
+.chronicle-keeper-list-models-btn {
+  background: var(--ck-primary, #8b5cf6);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.chronicle-keeper-test-btn:hover,
+.chronicle-keeper-list-models-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.chronicle-keeper-list-models-btn {
+  background: #4b5563;
+}
+
+/* ===== Animations ===== */
+@keyframes ck-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ck-bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ck-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ===== Scrollbar ===== */
+.chronicle-keeper-memory-browser::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chronicle-keeper-memory-browser::-webkit-scrollbar-track {
+  background: var(--ck-bg-dark);
+}
+
+.chronicle-keeper-memory-browser::-webkit-scrollbar-thumb {
+  background: var(--ck-border);
+  border-radius: 4px;
+}
+
+.chronicle-keeper-memory-browser::-webkit-scrollbar-thumb:hover {
+  background: var(--ck-primary);
+}
+
+/* ===== Memory Browser Tabs ===== */
+.chronicle-keeper-memory-browser {
+  background: var(--ck-bg-dark);
+  color: var(--ck-text);
+  padding: 10px;
+}
+
+.chronicle-keeper-memory-browser .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 15px;
+  border-bottom: 2px solid var(--ck-border);
+  padding-bottom: 10px;
+}
+
+.chronicle-keeper-memory-browser .tabs .item {
+  padding: 8px 12px;
+  background: var(--ck-bg-medium);
+  color: var(--ck-text-muted);
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  transition: var(--ck-transition);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.chronicle-keeper-memory-browser .tabs .item:hover {
+  background: var(--ck-bg-light);
+  color: var(--ck-text);
+}
+
+.chronicle-keeper-memory-browser .tabs .item.active {
+  background: var(--ck-primary);
+  color: white;
+}
+
+.chronicle-keeper-memory-browser .tab-content>.tab {
+  display: none;
+}
+
+.chronicle-keeper-memory-browser .tab-content>.tab.active {
+  display: block;
+}
+
+.chronicle-keeper-memory-browser .search-bar {
+  margin-bottom: 15px;
+}
+
+.chronicle-keeper-memory-browser .search-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--ck-bg-medium);
+  border: 1px solid var(--ck-border);
+  border-radius: var(--ck-radius);
+  color: var(--ck-text);
+}
+
+.chronicle-keeper-memory-browser .memory-list,
+.chronicle-keeper-memory-browser .entity-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.chronicle-keeper-memory-browser .memory-item {
+  background: var(--ck-bg-medium);
+  border-radius: var(--ck-radius);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.chronicle-keeper-memory-browser .memory-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+  color: var(--ck-text-muted);
+}
+
+.chronicle-keeper-memory-browser .memory-content {
+  color: var(--ck-text);
+  line-height: 1.5;
+}
+
+.chronicle-keeper-memory-browser .memory-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.chronicle-keeper-memory-browser .no-memories {
+  color: var(--ck-text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.chronicle-keeper-memory-browser .chronicle-keeper-entity {
+  background: var(--ck-bg-medium);
+  border-left: 3px solid var(--ck-primary);
+  border-radius: var(--ck-radius);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.chronicle-keeper-memory-browser .entity-name {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: var(--ck-text);
+  margin-bottom: 5px;
+}
+
+.chronicle-keeper-memory-browser .entity-type {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--ck-primary-light);
+  letter-spacing: 1px;
+}
+
+.chronicle-keeper-memory-browser .entity-description {
+  color: var(--ck-text-muted);
+  margin: 8px 0;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .chronicle-keeper-memory-browser {
+    min-width: 100%;
+  }
+}
+
+/* ===== Campaign Import Wizard ===== */
+.chronicle-keeper-import-wizard .window-content {
+  background: var(--ck-bg-dark) !important;
+  background-image: none !important;
+  color: var(--ck-text);
+  padding: 0;
+}
+
+.chronicle-keeper-import-wizard-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem;
+}
+
+/* Step Indicators */
+.wizard-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+}
+
+.step-indicator.active {
+  opacity: 1;
+}
+
+.step-indicator.completed {
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.step-indicator:hover {
+  opacity: 1;
+}
+
+.step-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ck-bg-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.step-indicator.active .step-icon {
+  background: var(--ck-primary);
+  color: white;
+  box-shadow: 0 0 10px var(--ck-primary);
+}
+
+.step-indicator.completed .step-icon {
+  background: var(--ck-success);
+  color: white;
+}
+
+.step-label {
+  font-size: 0.7rem;
+  text-align: center;
+  max-width: 60px;
+  color: var(--ck-text-muted);
+}
+
+.step-indicator.active .step-label {
+  color: var(--ck-text);
+  font-weight: 600;
+}
+
+.step-connector {
+  width: 30px;
+  height: 2px;
+  background: var(--ck-border);
+  margin: 0 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Wizard Content */
+.wizard-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.wizard-content h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: var(--ck-primary-light);
+  border-bottom: 1px solid var(--ck-border);
+  padding-bottom: 0.5rem;
+}
+
+.wizard-hint {
+  color: var(--ck-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.wizard-input-container {
+  height: 100%;
+}
+
+.wizard-input {
+  width: 100%;
+  min-height: 200px;
+  padding: 0.75rem;
+  background: var(--ck-bg-medium);
+  border: 1px solid var(--ck-border);
+  border-radius: var(--ck-radius);
+  color: var(--ck-text);
+  font-size: 0.9rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.wizard-input:focus {
+  outline: none;
+  border-color: var(--ck-primary);
+}
+
+.wizard-input::placeholder {
+  color: var(--ck-text-muted);
+  opacity: 1;
+  /* Increase opacity for readability */
+  font-style: italic;
+}
+
+/* Processing State */
+.wizard-processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 1rem;
+}
+
+.processing-spinner {
+  font-size: 3rem;
+  color: var(--ck-primary);
+}
+
+/* Review Step */
+.wizard-review {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.review-section {
+  margin-bottom: 1rem;
+}
+
+.review-section h3 {
+  font-size: 1rem;
+  color: var(--ck-primary-light);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.review-item {
+  background: var(--ck-bg-medium);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--ck-radius);
+  margin-bottom: 0.5rem;
+  border-left: 3px solid var(--ck-primary);
+}
+
+.review-item strong {
+  color: var(--ck-text);
+}
+
+.review-item p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ck-text-muted);
+}
+
+/* Navigation */
+.wizard-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ck-border);
+  margin-top: auto;
+}
+
+.wizard-prev,
+.wizard-next,
+.wizard-finish {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--ck-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.wizard-prev {
+  background: var(--ck-bg-light);
+  color: var(--ck-text);
+}
+
+.wizard-prev:hover:not(:disabled) {
+  background: var(--ck-bg-medium);
+}
+
+.wizard-next {
+  background: var(--ck-primary);
+  color: white;
+}
+
+.wizard-next:hover:not(:disabled) {
+  background: var(--ck-primary-dark);
+  transform: translateY(-1px);
+}
+
+.wizard-finish {
+  background: var(--ck-success);
+  color: white;
+}
+
+.wizard-finish:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.wizard-prev:disabled,
+.wizard-next:disabled,
+.wizard-finish:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wizard-progress {
+  font-size: 0.85rem;
+  color: var(--ck-text-muted);
+}

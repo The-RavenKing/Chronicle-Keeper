@@ -1,0 +1,125 @@
+<form class="chronicle-keeper-import-wizard-form" autocomplete="off">
+    {{!-- Step Indicators --}}
+    <div class="wizard-steps">
+        {{#each steps}}
+        <div class="step-indicator {{#if active}}active{{/if}} {{#if completed}}completed{{/if}}"
+            data-step="{{@index}}">
+            <div class="step-icon">
+                <i class="fas {{icon}}"></i>
+            </div>
+            <span class="step-label">{{title}}</span>
+        </div>
+        {{#unless @last}}<div class="step-connector"></div>{{/unless}}
+        {{/each}}
+    </div>
+
+    {{!-- Step Content --}}
+    <div class="wizard-content">
+        <h2><i class="fas {{step.icon}}"></i> {{step.title}}</h2>
+
+        {{#if isProcessing}}
+        <div class="wizard-processing">
+            <div class="processing-spinner">
+                <i class="fas fa-cog fa-spin"></i>
+            </div>
+            <p>Processing with AI... This may take a moment.</p>
+        </div>
+        {{else}}
+
+        {{#if isReviewStep}}
+        {{!-- Review Step --}}
+        <div class="wizard-review">
+            <p>Review the extracted data below. Click "Import" to save to Chronicle Keeper.</p>
+
+            {{#if extracted.campaign}}
+            <div class="review-section">
+                <h3><i class="fas fa-scroll"></i> Campaign</h3>
+                <div class="review-item">
+                    <strong>{{extracted.campaign.name}}</strong>
+                    <p>{{extracted.campaign.setting}}</p>
+                    <p><em>Current: {{extracted.campaign.currentSituation}}</em></p>
+                </div>
+            </div>
+            {{/if}}
+
+            {{#if extracted.characters.length}}
+            <div class="review-section">
+                <h3><i class="fas fa-users"></i> Player Characters ({{extracted.characters.length}})</h3>
+                {{#each extracted.characters}}
+                <div class="review-item">
+                    <strong>{{name}}</strong> - {{race}} {{class}}
+                    <p>{{personality}}</p>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if extracted.npcs.length}}
+            <div class="review-section">
+                <h3><i class="fas fa-user-friends"></i> NPCs ({{extracted.npcs.length}})</h3>
+                {{#each extracted.npcs}}
+                <div class="review-item">
+                    <strong>{{name}}</strong> ({{role}})
+                    <p>{{personality}}</p>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if extracted.locations.length}}
+            <div class="review-section">
+                <h3><i class="fas fa-map-marker-alt"></i> Locations ({{extracted.locations.length}})</h3>
+                {{#each extracted.locations}}
+                <div class="review-item">
+                    <strong>{{name}}</strong> ({{type}})
+                    <p>{{description}}</p>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+
+            {{#if extracted.storyBeats.length}}
+            <div class="review-section">
+                <h3><i class="fas fa-book"></i> Story Beats ({{extracted.storyBeats.length}})</h3>
+                {{#each extracted.storyBeats}}
+                <div class="review-item">
+                    <p>{{event}}</p>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+        </div>
+        {{else}}
+        {{!-- Input Step --}}
+        <div class="wizard-input-container">
+            <p class="wizard-hint">Paste or type your campaign notes below. The AI will extract relevant information.
+            </p>
+            <textarea class="wizard-input" name="input" placeholder="{{placeholders}}"
+                rows="12">{{inputValue}}</textarea>
+        </div>
+        {{/if}}
+
+        {{/if}}
+    </div>
+
+    {{!-- Navigation --}}
+    <div class="wizard-navigation">
+        <button type="button" class="wizard-prev" {{#if isFirstStep}}disabled{{/if}}>
+            <i class="fas fa-arrow-left"></i> Previous
+        </button>
+
+        <div class="wizard-progress">
+            Step {{currentStepDisplay}} of {{totalSteps}}
+        </div>
+
+        {{#if isLastStep}}
+        <button type="button" class="wizard-finish" {{#if isProcessing}}disabled{{/if}}>
+            <i class="fas fa-file-import"></i> Import Campaign
+        </button>
+        {{else}}
+        <button type="button" class="wizard-next" {{#if isProcessing}}disabled{{/if}}>
+            Next <i class="fas fa-arrow-right"></i>
+        </button>
+        {{/if}}
+    </div>
+</form>

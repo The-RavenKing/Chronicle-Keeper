@@ -1,0 +1,55 @@
+{
+  "id": "chronicle-keeper",
+  "title": "Chronicle Keeper - AI Dungeon Master",
+  "description": "An AI-powered Dungeon Master using Ollama for local LLM hosting, featuring robust memory management for long-term campaign continuity.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "12"
+  },
+  "authors": [
+    {
+      "name": "Chronicle Keeper Team",
+      "url": "https://github.com/chronicle-keeper"
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "3.0.0"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/chronicle-keeper.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true,
+  "url": "https://github.com/chronicle-keeper/chronicle-keeper-v2",
+  "manifest": "https://github.com/chronicle-keeper/chronicle-keeper-v2/releases/latest/download/module.json",
+  "download": "https://github.com/chronicle-keeper/chronicle-keeper-v2/releases/latest/download/module.zip",
+  "license": "MIT",
+  "readme": "README.md",
+  "bugs": "https://github.com/chronicle-keeper/chronicle-keeper-v2/issues",
+  "changelog": "https://github.com/chronicle-keeper/chronicle-keeper-v2/blob/main/CHANGELOG.md",
+  "flags": {
+    "chronicle-keeper": {
+      "memory": {},
+      "entities": {},
+      "sessions": []
+    }
+  }
+}
